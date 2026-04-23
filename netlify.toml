@@ -1,0 +1,12 @@
+# Netlify configuration for Odiefier
+
+[build]
+  publish   = "."
+  functions = "netlify/functions"
+
+# Redirect /api/* → Netlify Functions so the front-end can call
+# /api/speak instead of the full /.netlify/functions/speak path.
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/:splat"
+  status = 200

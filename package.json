@@ -1,0 +1,9 @@
+{
+  "name": "odiefier",
+  "version": "1.0.0",
+  "description": "Odiefy text and speak it with ElevenLabs TTS",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}
