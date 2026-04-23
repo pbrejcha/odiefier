@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Odiefier 🐶</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #ffd700;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 3.5rem;
+      color: #8b4513;
+      text-shadow: 3px 3px 0 #fff, 5px 5px 0 #8b4513;
+      letter-spacing: 2px;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      color: #5a3010;
+      margin-top: 0.5rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      padding: 2rem;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .upload-area {
+      border: 3px dashed #ffd700;
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #888;
+    }
+
+    .upload-area:hover { background: #fffbe6; }
+    .upload-area.dragover { background: #fff8cc; border-color: #e6b800; }
+
+    .upload-area span { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+
+    #fileInput { display: none; }
+
+    .effects {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .effects label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #ffd700;
+      border-radius: 20px;
+      padding: 0.35rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #5a3010;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .effects label:hover { background: #f0c800; }
+    .effects input[type="checkbox"] { accent-color: #8b4513; width: 1rem; height: 1rem; }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      color: #5a3010;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #8b4513;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.65rem 1.4rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    #odieBtn {
+      background: #8b4513;
+      color: #ffd700;
+      box-shadow: 0 4px 0 #5a2d0c;
+    }
+
+    #odieBtn:hover { background: #a0522d; }
+
+    #resetBtn {
+      background: #eee;
+      color: #555;
+      box-shadow: 0 4px 0 #ccc;
+    }
+
+    #downloadBtn {
+      background: #4caf50;
+      color: #fff;
+      box-shadow: 0 4px 0 #388e3c;
+      display: none;
+    }
+
+    #downloadBtn:hover { background: #43a047; }
+
+    .canvas-area {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .canvas-wrap {
+      flex: 1;
+      min-width: 220px;
+      text-align: center;
+    }
+
+    .canvas-wrap h3 {
+      font-size: 0.85rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+    }
+
+    canvas {
+      border-radius: 10px;
+      max-width: 100%;
+      border: 2px solid #eee;
+      display: block;
+      margin: 0 auto;
+      background: #f9f9f9;
+    }
+
+    #status {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #888;
+      margin-top: 1rem;
+    }
+
+    footer {
+      margin-top: 2rem;
+      color: #8b6914;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🐶 Odiefier</h1>
+    <p>Transform any photo into Odie-style art!</p>
+  </header>
+
+  <div class="card">
+    <div class="controls">
+      <div class="upload-area" id="uploadArea">
+        <span>🖼️</span>
+        <strong>Click or drag &amp; drop an image</strong><br/>
+        <small>JPEG, PNG, WebP, GIF supported</small>
+        <input type="file" id="fileInput" accept="image/*" />
+      </div>
+
+      <div class="effects">
+        <label><input type="checkbox" id="fxCartoon" checked /> 🎨 Cartoon</label>
+        <label><input type="checkbox" id="fxWarm" checked /> 🌅 Warm tones</label>
+        <label><input type="checkbox" id="fxGrain" /> 🌾 Film grain</label>
+        <label><input type="checkbox" id="fxVignette" checked /> 🔲 Vignette</label>
+        <label><input type="checkbox" id="fxInvert" /> 🔁 Invert</label>
+      </div>
+
+      <div class="slider-row">
+        <span>Posterize</span>
+        <input type="range" id="posterizeLevel" min="2" max="16" value="6" />
+        <span id="posterizeVal">6</span>
+      </div>
+
+      <div class="slider-row">
+        <span>Contrast</span>
+        <input type="range" id="contrastLevel" min="-100" max="100" value="40" />
+        <span id="contrastVal">40</span>
+      </div>
+
+      <div class="btn-row">
+        <button id="odieBtn">🐾 Odiefy!</button>
+        <button id="resetBtn">↩️ Reset</button>
+        <button id="downloadBtn">💾 Download</button>
+      </div>
+    </div>
+
+    <div class="canvas-area">
+      <div class="canvas-wrap">
+        <h3>Original</h3>
+        <canvas id="originalCanvas" width="300" height="200"></canvas>
+      </div>
+      <div class="canvas-wrap">
+        <h3>Odie-fied 🐶</h3>
+        <canvas id="resultCanvas" width="300" height="200"></canvas>
+      </div>
+    </div>
+
+    <p id="status">Upload an image to get started!</p>
+  </div>
+
+  <footer>Made with 🐾 &amp; ❤️ &mdash; Odiefier</footer>
+
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const odieBtn = document.getElementById('odieBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const origCanvas = document.getElementById('originalCanvas');
+    const resultCanvas = document.getElementById('resultCanvas');
+    const origCtx = origCanvas.getContext('2d');
+    const resultCtx = resultCanvas.getContext('2d');
+    const status = document.getElementById('status');
+    const posterizeSlider = document.getElementById('posterizeLevel');
+    const posterizeVal = document.getElementById('posterizeVal');
+    const contrastSlider = document.getElementById('contrastLevel');
+    const contrastVal = document.getElementById('contrastVal');
+
+    let loadedImage = null;
+
+    posterizeSlider.addEventListener('input', () => { posterizeVal.textContent = posterizeSlider.value; });
+    contrastSlider.addEventListener('input', () => { contrastVal.textContent = contrastSlider.value; });
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) loadFile(file);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadFile(fileInput.files[0]); });
+
+    function loadFile(file) {
+      if (!file.type.startsWith('image/')) { status.textContent = '⚠️ Please select a valid image file (JPEG, PNG, WebP, or GIF).'; return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          loadedImage = img;
+          drawOriginal(img);
+          status.textContent = 'Image loaded! Click "Odiefy!" to apply the effect.';
+          downloadBtn.style.display = 'none';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function drawOriginal(img) {
+      const max = 300;
+      const scale = Math.min(max / img.width, max / img.height, 1);
+      origCanvas.width = Math.round(img.width * scale);
+      origCanvas.height = Math.round(img.height * scale);
+      resultCanvas.width = origCanvas.width;
+      resultCanvas.height = origCanvas.height;
+      origCtx.drawImage(img, 0, 0, origCanvas.width, origCanvas.height);
+      resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+    }
+
+    odieBtn.addEventListener('click', () => {
+      if (!loadedImage) { status.textContent = '⚠️ Please upload an image first!'; return; }
+      odiefy();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (!loadedImage) return;
+      resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+      downloadBtn.style.display = 'none';
+      status.textContent = 'Reset. Click "Odiefy!" to apply effects again.';
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'odie-fied.png';
+      link.href = resultCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    function odiefy() {
+      status.textContent = '🎨 Applying Odie magic…';
+      setTimeout(() => {
+        const w = origCanvas.width;
+        const h = origCanvas.height;
+        resultCanvas.width = w;
+        resultCanvas.height = h;
+        resultCtx.drawImage(origCanvas, 0, 0);
+
+        let imageData = resultCtx.getImageData(0, 0, w, h);
+        let data = imageData.data;
+
+        const contrast = parseInt(contrastSlider.value);
+        const levels = parseInt(posterizeSlider.value);
+        const doCartoon = document.getElementById('fxCartoon').checked;
+        const doWarm = document.getElementById('fxWarm').checked;
+        const doGrain = document.getElementById('fxGrain').checked;
+        const doInvert = document.getElementById('fxInvert').checked;
+        const doVignette = document.getElementById('fxVignette').checked;
+
+        // Apply contrast
+        if (contrast !== 0) {
+          const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+          for (let i = 0; i < data.length; i += 4) {
+            data[i]     = clamp(factor * (data[i]     - 128) + 128);
+            data[i + 1] = clamp(factor * (data[i + 1] - 128) + 128);
+            data[i + 2] = clamp(factor * (data[i + 2] - 128) + 128);
+          }
+        }
+
+        // Posterize
+        const step = 255 / (levels - 1);
+        for (let i = 0; i < data.length; i += 4) {
+          data[i]     = Math.round(data[i]     / step) * step;
+          data[i + 1] = Math.round(data[i + 1] / step) * step;
+          data[i + 2] = Math.round(data[i + 2] / step) * step;
+        }
+
+        // Warm tones
+        if (doWarm) {
+          for (let i = 0; i < data.length; i += 4) {
+            data[i]     = clamp(data[i] + 20);
+            data[i + 1] = clamp(data[i + 1] + 8);
+            data[i + 2] = clamp(data[i + 2] - 20);
+          }
+        }
+
+        // Invert
+        if (doInvert) {
+          for (let i = 0; i < data.length; i += 4) {
+            data[i]     = 255 - data[i];
+            data[i + 1] = 255 - data[i + 1];
+            data[i + 2] = 255 - data[i + 2];
+          }
+        }
+
+        // Film grain
+        if (doGrain) {
+          for (let i = 0; i < data.length; i += 4) {
+            const noise = (Math.random() - 0.5) * 40;
+            data[i]     = clamp(data[i] + noise);
+            data[i + 1] = clamp(data[i + 1] + noise);
+            data[i + 2] = clamp(data[i + 2] + noise);
+          }
+        }
+
+        resultCtx.putImageData(imageData, 0, 0);
+
+        // Cartoon edge overlay
+        if (doCartoon) {
+          drawEdges(origCanvas, resultCtx, w, h);
+        }
+
+        // Vignette
+        if (doVignette) {
+          drawVignette(resultCtx, w, h);
+        }
+
+        status.textContent = '🐶 Odie-fied! Download your masterpiece below.';
+        downloadBtn.style.display = '';
+      }, 20);
+    }
+
+    function drawEdges(src, ctx, w, h) {
+      const tmp = document.createElement('canvas');
+      tmp.width = w; tmp.height = h;
+      const tCtx = tmp.getContext('2d');
+      tCtx.drawImage(src, 0, 0);
+      const srcData = tCtx.getImageData(0, 0, w, h).data;
+      const edgeCanvas = document.createElement('canvas');
+      edgeCanvas.width = w; edgeCanvas.height = h;
+      const eCtx = edgeCanvas.getContext('2d');
+      const edgeData = eCtx.createImageData(w, h);
+      const ed = edgeData.data;
+
+      const threshold = 30;
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const idx = (y * w + x) * 4;
+          const idxR = (y * w + (x + 1)) * 4;
+          const idxD = ((y + 1) * w + x) * 4;
+          const grayC = gray(srcData, idx);
+          const grayR = gray(srcData, idxR);
+          const grayD = gray(srcData, idxD);
+          const edge = Math.abs(grayC - grayR) + Math.abs(grayC - grayD);
+          const v = edge > threshold ? 0 : 255;
+          ed[idx] = 0; ed[idx + 1] = 0; ed[idx + 2] = 0;
+          ed[idx + 3] = v === 0 ? 180 : 0;
+        }
+      }
+      eCtx.putImageData(edgeData, 0, 0);
+      ctx.drawImage(edgeCanvas, 0, 0);
+    }
+
+    function gray(data, i) {
+      return 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    }
+
+    function drawVignette(ctx, w, h) {
+      const grad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(0,0,0,0.55)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function clamp(v) { return Math.max(0, Math.min(255, v)); }
+  </script>
+</body>
+</html>
