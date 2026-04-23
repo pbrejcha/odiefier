@@ -240,10 +240,12 @@
 
     let odiefiedText = '';
     let currentAudio  = null; // tracks the currently-playing Audio element
+    let cachedAudioBlob = null; // cached audio blob from last Odiefy! fetch
 
-    // ── ElevenLabs TTS via Netlify function ─────────────────────────
-    async function speakWithElevenLabs(text) {
+    // ── Fetch audio from backend, cache the blob, and play it ────────
+    async function fetchAndPlayAudio(text) {
       stopAudio();
+      cachedAudioBlob = null;
       setSpeakingState(true);
 
       try {
@@ -255,28 +257,37 @@
 
         if (!res.ok) {
           console.warn('ElevenLabs TTS request failed:', res.status);
+          btnSpeak.disabled = true;
           setSpeakingState(false);
           return;
         }
 
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-        currentAudio = new Audio(url);
-        currentAudio.onended = () => {
-          URL.revokeObjectURL(url);
-          currentAudio = null;
-          setSpeakingState(false);
-        };
-        currentAudio.onerror = () => {
-          URL.revokeObjectURL(url);
-          currentAudio = null;
-          setSpeakingState(false);
-        };
-        currentAudio.play();
+        cachedAudioBlob = await res.blob();
+        playAudioBlob(cachedAudioBlob);
       } catch (err) {
         console.warn('ElevenLabs TTS unavailable:', err);
+        btnSpeak.disabled = true;
         setSpeakingState(false);
       }
+    }
+
+    // ── Play from a cached Blob without making a new backend request ─
+    function playAudioBlob(blob) {
+      if (!blob) return;
+      setSpeakingState(true);
+      const url = URL.createObjectURL(blob);
+      currentAudio = new Audio(url);
+      currentAudio.onended = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        setSpeakingState(false);
+      };
+      currentAudio.onerror = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        setSpeakingState(false);
+      };
+      currentAudio.play();
     }
 
     function stopAudio() {
@@ -305,6 +316,7 @@
         outputEl.classList.add('empty');
         btnSpeak.disabled = true;
         odiefiedText = '';
+        cachedAudioBlob = null;
         stopAudio();
         return;
       }
@@ -317,8 +329,8 @@
       outputEl.classList.remove('empty');
       btnSpeak.disabled = false;
 
-      // Call ElevenLabs TTS immediately after odiefying
-      await speakWithElevenLabs(odiefiedText);
+      // Fetch audio from backend, cache it, and play it automatically
+      await fetchAndPlayAudio(odiefiedText);
     });
 
     // ── Allow Enter key (Ctrl/Cmd+Enter) to trigger Odiefy ─────────
@@ -328,7 +340,7 @@
       }
     });
 
-    // ── Speak button (re-speak the last odiefied text) ───────────────
+    // ── Speak button (re-play the cached audio, no new backend request) ─
     btnSpeak.addEventListener('click', () => {
       if (!odiefiedText) return;
 
@@ -338,7 +350,10 @@
         return;
       }
 
-      speakWithElevenLabs(odiefiedText);
+      // Play from the cached blob fetched during Odiefy!
+      if (cachedAudioBlob) {
+        playAudioBlob(cachedAudioBlob);
+      }
     });
   </script>
 </body>
