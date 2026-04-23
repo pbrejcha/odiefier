@@ -239,28 +239,86 @@
     const speakLabel = document.getElementById('speak-label');
 
     let odiefiedText = '';
+    let currentAudio  = null; // tracks the currently-playing Audio element
+
+    // ── ElevenLabs TTS via Netlify function ─────────────────────────
+    async function speakWithElevenLabs(text) {
+      stopAudio();
+      setSpeakingState(true);
+
+      try {
+        const res = await fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!res.ok) {
+          console.warn('ElevenLabs TTS request failed:', res.status);
+          setSpeakingState(false);
+          return;
+        }
+
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        currentAudio = new Audio(url);
+        currentAudio.onended = () => {
+          URL.revokeObjectURL(url);
+          currentAudio = null;
+          setSpeakingState(false);
+        };
+        currentAudio.onerror = () => {
+          URL.revokeObjectURL(url);
+          currentAudio = null;
+          setSpeakingState(false);
+        };
+        currentAudio.play();
+      } catch (err) {
+        console.warn('ElevenLabs TTS unavailable:', err);
+        setSpeakingState(false);
+      }
+    }
+
+    function stopAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      setSpeakingState(false);
+    }
+
+    function setSpeakingState(speaking) {
+      if (speaking) {
+        btnSpeak.classList.add('speaking');
+        speakLabel.textContent = 'Thtop thpeaking!';
+      } else {
+        btnSpeak.classList.remove('speaking');
+        speakLabel.textContent = 'Thpeak it!';
+      }
+    }
 
     // ── Odiefy click ────────────────────────────────────────────────
-    btnOdiefy.addEventListener('click', () => {
+    btnOdiefy.addEventListener('click', async () => {
       const raw = inputEl.value.trim();
       if (!raw) {
         outputEl.textContent = 'Your Odiefied text will appear here…';
         outputEl.classList.add('empty');
         btnSpeak.disabled = true;
         odiefiedText = '';
+        stopAudio();
         return;
       }
+
+      // Stop any audio that might still be playing
+      stopAudio();
 
       odiefiedText = odiefy(raw);
       outputEl.textContent = odiefiedText;
       outputEl.classList.remove('empty');
       btnSpeak.disabled = false;
 
-      // Stop any in-progress speech
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        resetSpeakButton();
-      }
+      // Call ElevenLabs TTS immediately after odiefying
+      await speakWithElevenLabs(odiefiedText);
     });
 
     // ── Allow Enter key (Ctrl/Cmd+Enter) to trigger Odiefy ─────────
@@ -270,51 +328,18 @@
       }
     });
 
-    // ── Speech ──────────────────────────────────────────────────────
-    function resetSpeakButton() {
-      btnSpeak.classList.remove('speaking');
-      speakLabel.textContent = 'Thpeak it!';
-    }
-
+    // ── Speak button (re-speak the last odiefied text) ───────────────
     btnSpeak.addEventListener('click', () => {
-      if (!window.speechSynthesis || !odiefiedText) return;
+      if (!odiefiedText) return;
 
-      // Toggle: if already speaking, cancel
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        resetSpeakButton();
+      // Toggle: if already speaking, stop
+      if (currentAudio) {
+        stopAudio();
         return;
       }
 
-      const utter = new SpeechSynthesisUtterance(odiefiedText);
-
-      // ── Sylvester-inspired voice settings ────────────────────────
-      // Low pitch and deliberate rate give that cartoon-cat drawl.
-      utter.pitch = 0.72;   // 0 (low) … 2 (high) — gravelly, low
-      utter.rate  = 0.88;   // 0.1 … 10 — slightly slow for effect
-      utter.volume = 1;
-
-      // Prefer a deep male voice when available
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(v =>
-        /male|daniel|david|mark|alex|Google UK English Male/i.test(v.name)
-      );
-      if (preferred) utter.voice = preferred;
-
-      utter.onstart = () => {
-        btnSpeak.classList.add('speaking');
-        speakLabel.textContent = 'Thop thpeaking!';
-      };
-      utter.onend  = resetSpeakButton;
-      utter.onerror = resetSpeakButton;
-
-      window.speechSynthesis.speak(utter);
+      speakWithElevenLabs(odiefiedText);
     });
-
-    // Some browsers load voices asynchronously
-    if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = () => { /* voices now ready */ };
-    }
   </script>
 </body>
 </html>
