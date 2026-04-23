@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Odiefier – Thpeak Like Thylvethter!</title>
+  <style>
+    /* ── Reset ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Page ───────────────────────────────────── */
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2rem 1rem 4rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #fef9e7;
+      background-image:
+        radial-gradient(circle at 20% 10%, #ffe0b2 0%, transparent 55%),
+        radial-gradient(circle at 80% 90%, #b3e5fc 0%, transparent 55%);
+      color: #2c2c2c;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: #e65100;
+      text-shadow: 3px 3px 0 #ffe082, 5px 5px 0 #ffca28;
+    }
+    header p {
+      margin-top: 0.4rem;
+      font-size: 1.05rem;
+      color: #555;
+      font-style: italic;
+    }
+
+    /* ── Card ───────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 680px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.12);
+      padding: 2rem;
+    }
+
+    /* ── Section labels ─────────────────────────── */
+    label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #888;
+      margin-bottom: 0.45rem;
+    }
+
+    /* ── Textarea ───────────────────────────────── */
+    #input-text {
+      width: 100%;
+      height: 130px;
+      padding: 0.85rem 1rem;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color .2s;
+      line-height: 1.55;
+    }
+    #input-text:focus {
+      outline: none;
+      border-color: #e65100;
+    }
+
+    /* ── Odiefy button ──────────────────────────── */
+    #btn-odiefy {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.9rem;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      color: #fff;
+      background: linear-gradient(135deg, #e65100, #ff9800);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(230,81,0,.35);
+      transition: transform .1s, box-shadow .1s;
+    }
+    #btn-odiefy:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(230,81,0,.4); }
+    #btn-odiefy:active { transform: translateY(0); }
+
+    /* ── Divider ────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 2px dashed #eee;
+      margin: 1.6rem 0;
+    }
+
+    /* ── Output box ─────────────────────────────── */
+    #output-box {
+      min-height: 80px;
+      padding: 1rem;
+      background: #fff8e1;
+      border: 2px solid #ffe082;
+      border-radius: 10px;
+      font-size: 1.15rem;
+      line-height: 1.65;
+      word-break: break-word;
+      color: #333;
+    }
+    #output-box.empty {
+      color: #bbb;
+      font-style: italic;
+      font-size: 0.95rem;
+    }
+
+    /* ── Speak button ───────────────────────────── */
+    #btn-speak {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #e65100;
+      background: #fff;
+      border: 2px solid #e65100;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    #btn-speak:hover { background: #fff3e0; }
+    #btn-speak:disabled { opacity: 0.4; cursor: default; }
+    #btn-speak svg { flex-shrink: 0; }
+
+    /* ── Speaking animation ─────────────────────── */
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.15); }
+    }
+    #btn-speak.speaking svg { animation: pulse .5s ease-in-out infinite; }
+
+    /* ── Footer ─────────────────────────────────── */
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.78rem;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🐱 Odiefier</h1>
+    <p>Thpeak jutht like Thylvethter the Cat!</p>
+  </header>
+
+  <main class="card">
+    <!-- Input -->
+    <label for="input-text">Your text</label>
+    <textarea
+      id="input-text"
+      placeholder="Type thomething here… like 'suburbs' or 'something'."
+      spellcheck="true"
+      aria-label="Text to Odiefy"
+    ></textarea>
+
+    <button id="btn-odiefy" type="button">✨ Odiefy!</button>
+
+    <hr class="divider" />
+
+    <!-- Output -->
+    <label>Odiefied text</label>
+    <div id="output-box" class="empty" aria-live="polite" aria-atomic="true">
+      Your Odiefied text will appear here…
+    </div>
+
+    <button id="btn-speak" type="button" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>
+      <span id="speak-label">Thpeak it!</span>
+    </button>
+  </main>
+
+  <footer>
+    Sufferin' thuccotath! &nbsp;|&nbsp; Odiefier &copy; 2024
+  </footer>
+
+  <script>
+    /**
+     * Odiefy a string:
+     *  – Replace every "s" letter sound with a "th" sound.
+     *  – The "sh" digraph is also converted so "should" → "thould"
+     *    (the /ʃ/ starts with an s-like letter and Sylvester drops
+     *    the 'h' into a th-lisp, giving the classic cartoon sound).
+     *
+     * Replacement order (most-specific patterns first):
+     *   1. SH / Sh / sh  → TH / Th / th
+     *   2. S (not before a lowercase letter, e.g. all-caps) → TH
+     *   3. S (before lowercase, e.g. sentence-start)        → Th
+     *   4. s                                                 → th
+     */
+    function odiefy(text) {
+      return text
+        // ── digraph "sh" (case variants first) ─────────────────────
+        .replace(/SH/g,       'TH')
+        .replace(/Sh/g,       'Th')
+        .replace(/sh/g,       'th')
+        // ── standalone S / s ────────────────────────────────────────
+        .replace(/S(?![a-z])/g, 'TH') // ALL-CAPS context or end-of-word
+        .replace(/S/g,          'Th') // sentence-start / title case
+        .replace(/s/g,          'th');
+    }
+
+    // ── DOM refs ────────────────────────────────────────────────────
+    const inputEl    = document.getElementById('input-text');
+    const outputEl   = document.getElementById('output-box');
+    const btnOdiefy  = document.getElementById('btn-odiefy');
+    const btnSpeak   = document.getElementById('btn-speak');
+    const speakLabel = document.getElementById('speak-label');
+
+    let odiefiedText = '';
+
+    // ── Odiefy click ────────────────────────────────────────────────
+    btnOdiefy.addEventListener('click', () => {
+      const raw = inputEl.value.trim();
+      if (!raw) {
+        outputEl.textContent = 'Your Odiefied text will appear here…';
+        outputEl.classList.add('empty');
+        btnSpeak.disabled = true;
+        odiefiedText = '';
+        return;
+      }
+
+      odiefiedText = odiefy(raw);
+      outputEl.textContent = odiefiedText;
+      outputEl.classList.remove('empty');
+      btnSpeak.disabled = false;
+
+      // Stop any in-progress speech
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        resetSpeakButton();
+      }
+    });
+
+    // ── Allow Enter key (Ctrl/Cmd+Enter) to trigger Odiefy ─────────
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        btnOdiefy.click();
+      }
+    });
+
+    // ── Speech ──────────────────────────────────────────────────────
+    function resetSpeakButton() {
+      btnSpeak.classList.remove('speaking');
+      speakLabel.textContent = 'Thpeak it!';
+    }
+
+    btnSpeak.addEventListener('click', () => {
+      if (!window.speechSynthesis || !odiefiedText) return;
+
+      // Toggle: if already speaking, cancel
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        resetSpeakButton();
+        return;
+      }
+
+      const utter = new SpeechSynthesisUtterance(odiefiedText);
+
+      // ── Sylvester-inspired voice settings ────────────────────────
+      // Low pitch and deliberate rate give that cartoon-cat drawl.
+      utter.pitch = 0.72;   // 0 (low) … 2 (high) — gravelly, low
+      utter.rate  = 0.88;   // 0.1 … 10 — slightly slow for effect
+      utter.volume = 1;
+
+      // Prefer a deep male voice when available
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v =>
+        /male|daniel|david|mark|alex|Google UK English Male/i.test(v.name)
+      );
+      if (preferred) utter.voice = preferred;
+
+      utter.onstart = () => {
+        btnSpeak.classList.add('speaking');
+        speakLabel.textContent = 'Thop thpeaking!';
+      };
+      utter.onend  = resetSpeakButton;
+      utter.onerror = resetSpeakButton;
+
+      window.speechSynthesis.speak(utter);
+    });
+
+    // Some browsers load voices asynchronously
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = () => { /* voices now ready */ };
+    }
+  </script>
+</body>
+</html>
